@@ -1,0 +1,4 @@
+npm install -g nodemon
+
+使用
+nodemon app.js
