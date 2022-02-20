@@ -1,58 +1,57 @@
+// P7的第二题稍微改了改，匹配指定目录下所有文件
 const fs = require('fs')
-
-var jsFileList = [];
-var cssFileList = [];
-var htmlFileList = [];
-
-var reg = /(?:js|css|html)$/;
-var regofjs = /(?:js)$/;
-var regofcss = /(?:css)$/;
-var regofhtml = /(?:html)$/;
-
-
-
-function readAddir(dir) {
-    fs.readdir(dir, (error, files) => {
-        if (error) {
-            return
-        }
-        else {
-            if (files.length == 0) return
-            for (const i of files) {
-                let dirs = dir + '/' + i
-                fs.stat(dirs, function (err, stats) {
-                    if (stats.isFile()) {
-                        if (reg.test(i)) {
-                            if (regofjs.test(i)) {
-                                jsFileList.push({
-                                    path: dirs,
-                                    name: i
-                                })
-                            }
-                            else if (regofcss.test(i)) {
-                                cssFileList.push({
-                                    path: dirs,
-                                    name: i
-                                })
-                            }
-                            else if (regofhtml.test(i)) {
-                                htmlFileList.push({
-                                    path: dirs,
-                                    name: i
-                                })
-                            }
-                        }
+const path = require('path');
+const getAllregFile = (dir, reg) => {
+    return new Promise((resolve, rejects) => {
+        fs.stat(dir, (err, stats) => {
+            if (err) rejects(err);
+            if (stats.isFile()) {
+                {
+                    const regexp = new RegExp(reg)
+                    if (regexp.test(dir)) {
+                        const parse = path.parse(dir)
+                        resolve([{ dir: parse.dir, base: parse.base }])
                     }
+                    else
+                        resolve([])
+                }
+            }
+            else {
+                fs.readdir(dir, (err, files) => {
+                    if (err) rejects(err)
                     else {
-                        readAddir(dirs)
+                        let promiseList = []
+                        let list = []
+                        for (const iterator of files) {
+                            promiseList.push(
+                                getAllregFile(dir + '/' + iterator, reg)
+                                    .then(data => {
+                                        list = [...list, ...data]
+                                    })
+                                    .catch(error => {
+                                        rejects(error)
+                                    })
+                            )
+                        }
+                        Promise.all(promiseList)
+                            .then(_ => {
+                                resolve(list)
+                            })
+                            .catch(error => {
+                                rejects(error)
+                            })
                     }
                 })
             }
-        }
-
+        })
     })
 }
-readAddir('./dist')
-setTimeout(() => {
-    console.log(jsFileList);
-}, 6000);
+var reg = /(?:js|css|html)$/;
+var fileputh = 'C:/Users'
+getAllregFile(fileputh.replace(/\/*$/, ''), reg)
+    .then(data => {
+        console.log(data);
+    })
+    .catch(error => {
+        console.log(error);
+    })
