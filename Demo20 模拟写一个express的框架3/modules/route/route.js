@@ -40,8 +40,10 @@ let bast = {
         response.end('页面不存在');
     }
 }
-let get = {}
-let post = {}
+let G = {
+    _get: {},
+    _post: {}
+}
 let app = async (request, response, static = "static") => {
     try {
         await bast['static'](request, response, static)
@@ -50,22 +52,17 @@ let app = async (request, response, static = "static") => {
         const router = myUrl.pathname
         const method = request.method.toLowerCase()
         try {
-            if (method === 'get')
-                get[router](request, response)
-            else if (method === 'post')
-                post[router](request, response)
-            else
-                bast['error'](request, response)
+            G["_" + method][router](request, response)
         } catch (error) {
             bast['error'](request, response)
         }
     }
 }
 app.get = (api, callback) => {
-    get[api] = callback
+    G["_get"][api] = callback
 }
 app.post = (api, callback) => {
-    post[api] = callback
+    G["_post"][api] = callback
 }
 module.exports = app
 
