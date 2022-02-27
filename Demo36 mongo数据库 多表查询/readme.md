@@ -32,7 +32,7 @@ db.student.insert({"cid":"030C","sid":"030C04","className":"3年C班","name":"�
 
 ```bash
 use school
-db.student.aggregate([
+db.getCollection("student").aggregate([
 	{
 		$project: {
 			_id:0,
@@ -46,5 +46,88 @@ db.student.aggregate([
 
 ```
 
+## 3、增加条件
 
 
+
+![2](2.jpg)
+
+```bash
+db.getCollection("student").aggregate([{
+    $match: {
+        cid: "030A"
+    }
+}, {
+    $project: {
+        _id: 0,
+        "班级": "$className",
+        "学号": "$sid",
+        "姓名": "$name"
+    }
+}])
+```
+
+## 4、计数
+
+![3](3.jpg)
+
+```bash
+db.getCollection("student").aggregate([{$match:{
+    sex: "男"
+}}, {$group:{
+    _id: {
+        "className": "$className"
+    },
+    count: {
+        $sum: 1
+    }
+}}, {$project:{
+    _id: 0,
+	"班级名称":"$_id.className",
+    "男生数": "$count"
+}}])
+```
+
+## 5、多表合并1
+
+![4](4.jpg)
+
+```bash
+db.getCollection("student").aggregate([{
+    $lookup: {
+        from: "banji",
+        localField: "cid",
+        foreignField: "cid",
+        as: "banji"
+    }
+}, {
+    $project: {
+        _id: 0,
+        学号: "$sid",
+        "班级": "$className",
+        "姓名": '$name',
+        班主任: {
+            $arrayElemAt: ["$banji.classTeacher", 0]
+        }
+    }
+}])
+```
+
+## 6、多表合并2
+
+![5](5.png)
+
+```bash
+db.getCollection("banji").aggregate([{
+    $match: {
+        cid: "030A"
+    }
+}, {
+    $lookup: {
+        from: "student",
+        localField: "cid",
+        foreignField: "cid",
+        as: "studentList"
+    }
+}])
+```
